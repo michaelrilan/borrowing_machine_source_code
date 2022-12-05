@@ -1,10 +1,10 @@
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
-LiquidCrystal_I2C lcd(0x27,20,4); 
+LiquidCrystal_I2C lcd(0x27,16,4); 
 #include <Servo.h>
 Servo myservo;
 const int coin = 2;
-const int buttonPin = 8; 
+const int buttonPin = 10; 
 boolean insert = false;
 int pulse = 0;
 int clk = 0;
@@ -15,8 +15,6 @@ int pos = 0;
 int price;
 void setup() {
   // put your setup code here, to run once:
-
-  
   Serial.begin(9600);
   attachInterrupt(digitalPinToInterrupt(2), coinInterrupt, FALLING);
   delay(100);
@@ -28,7 +26,7 @@ void setup() {
   lcd.setCursor(0,1);
   lcd.print("Credits: 0/10");
   pinMode(buttonPin, INPUT);
-  myservo.attach(9);
+  myservo.attach(11);
   price = 10;
 }
 
@@ -55,7 +53,7 @@ void display_errorrr(){
     lcd.setCursor(0,0);
     lcd.print("Insufficient");
     lcd.setCursor(0,1);
-    lcd.print("Credit");
+    lcd.print("Credits");
     }
 
 
@@ -96,10 +94,12 @@ void loop() {
   }
 
   buttonState = digitalRead(buttonPin);
-  if (buttonState == HIGH  && credits >= price) {
-    credits = credits-price;
-    creditsmeth();
-    for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
+  if (buttonState == HIGH) {
+    if(credits >= price){
+     credits = credits-price;
+     creditsmeth();
+     delay(100);
+     for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
     // in steps of 1 degree
       myservo.write(pos);              // tell servo to go to position in variable 'pos'
       delay(15);                       // waits 15ms for the servo to reach the position
@@ -107,13 +107,15 @@ void loop() {
     for (pos = 180; pos >= 0; pos -= 1) { // goes from 180 degrees to 0 degrees
       myservo.write(pos);              // tell servo to go to position in variable 'pos'
       delay(15);                       // waits 15ms for the servo to reach the position
-  }                     // waits 15ms for the servo to reach the position
-  }
-   
-  else if (buttonState == HIGH  && credits < price) {
-    display_errorrr();
+  }                     // waits 15ms for the servo to reach the position  
+      }
+    else{
+     display_errorrr();
     delay(2000);
-    creditsmeth();
+    creditsmeth(); 
+    delay(500); 
+      }
+    
+  }
     
   } 
-}
