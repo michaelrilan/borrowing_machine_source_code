@@ -58,12 +58,15 @@ void display_errorrr(){
 
 
 void loop() {
+  
   // put your main code here, to run repeatedly:
   clk = clk+1;
   Serial.print("clock = ");
   Serial.print(clk);
   Serial.print("Impulse:"); 
   Serial.println(impulscnt); 
+
+  myservo.write(0);
   
   if (clk >= 30 and insert == true and impulscnt == 1) {
     insert = false;

@@ -1,84 +1,121 @@
-#include<SoftwareSerial.h>
-#include <ESP8266WiFi.h>
+#include <ESP8266WiFi.h> 
+
+#include <ESP8266HTTPClient.h> 
 #include <WiFiClient.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266HTTPClient.h>
-#include <LiquidCrystal_I2C.h>
-LiquidCrystal_I2C lcd(0x27, 16, 2); // I2C address 0x27, 16 column and 2 rows
+#include <SoftwareSerial.h>
 
 
+SoftwareSerial WemosSerial (D1,D2);// declaring wemos RX/TX pins;;
+const char* ssid     = "RILAN_ZTE_2.4G";
+const char* password = "Escanor_7th";
+
+const char* serverName = "http://192.168.1.5/PE_System/physical_education_web_app/machine_API.php";
+
+int red_light_pin= D3;
+int green_light_pin = D4;
 
 
-SoftwareSerial wemos (D1,D2);//virtual RX and TX pins
+String dataIn;
+char c;
 
-int count = 0;
-int max_digit = 6;
-String otp_typed = "";
-
-int readyy;
-HTTPClient http;
-WiFiClient client;
-
-
-// Replace with your network credentials
-const char* ssid =      "RILAN_ZTE_2.4G";
-const char* password =  "Escanor_7th";
+void RGB_color(int red_light_value, int green_light_value)
+ {
+  analogWrite(red_light_pin, red_light_value);
+  analogWrite(green_light_pin, green_light_value);
+}
 
 
 void setup() {
   Serial.begin(115200);
-  wemos.begin(9600);
+  WemosSerial.begin(9600);
+  
+  pinMode(red_light_pin, OUTPUT);
+  pinMode(green_light_pin, OUTPUT);
   
   WiFi.begin(ssid, password);
-  
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    lcd.init();
-    lcd.backlight();
-    lcd.setCursor(0,0);
-    lcd.print("Connecting..");
-    lcd.setCursor(0,1);
-    lcd.print("too long?restart");
-    readyy = 0;
-  }  
-  if(WiFi.status() == WL_CONNECTED) {
-    Serial.print("Connected! WiFi Name: ");
-    Serial.println(ssid);
-    Serial.print("Connected! IP address: ");
-    Serial.println(WiFi.localIP());
-    lcd.init();
-    lcd.backlight();
-    lcd.setCursor(0,0);
-    lcd.print("Ready! Enter OTP");
-    readyy = 1;
+  Serial.println("Connecting");
+  while(WiFi.status() != WL_CONNECTED) {
+    RGB_color(0, 255); // Green
+    delay(500);
+    RGB_color(255, 0); // Red
+    delay(500);
+    
   }
+  if(WiFi.status()== WL_CONNECTED){
+    RGB_color(0, 255); // Green
+      Serial.println("");
+  Serial.print("Connected to WiFi network with IP Address: ");
+  Serial.println(WiFi.localIP());
+    }
   else{
-    Serial.println("wifi Connection Error");
-    lcd.init();
-    lcd.backlight();
-    lcd.setCursor(0,0);
-    lcd.print("WiFi Error");
-    readyy = 0;
+    RGB_color(0,255); // Red
+    
     }
 
 }
+
 
 
 void loop() {
-  String msg = wemos.readStringUntil('\r');
-    if(readyy == 0){
-    lcd.clear();
-    lcd.setCursor(0,0);
-    lcd.print("WiFi Error");  
-    }
-    else{
-    otp_typed = otp_typed+msg;
-    lcd.clear();
-    lcd.setCursor(0,0);
-    lcd.print("Ready! Enter OTP");
-    lcd.setCursor(0,1);
-    lcd.print(otp_typed);
-      }
+    //Check WiFi connection status
+    if(WiFi.status()== WL_CONNECTED){
+      while(WemosSerial.available()>0){
+          c = WemosSerial.read();
+          if(c == '\n') {break;}    
+          else {dataIn+=c;}
+        }
+        if(c == '\n'){
+          Serial.println(dataIn);
+          WiFiClient client;
+          HTTPClient http;      
+          // Your Domain name with URL path or IP address with path
+          http.begin(client, serverName);
     
+          // Specify content-type header
+          http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+          // Data to send with HTTP POST
+          dataIn.trim();
+          String httpRequestData = "otpdata="+dataIn;           
+          // Send HTTP POST request
+          int httpResponseCode = http.POST(httpRequestData);
+          String payloadGet = http.getString();
+          Serial.print("HTTP Response code: ");
+          Serial.println(httpResponseCode);
+          Serial.print(payloadGet);
+          payloadGet.trim();
+          WemosSerial.print(payloadGet + " \n");
+    //      
+    //      // Free resources
+          http.end();
+          c = 0;
+          dataIn = "";
+        }
+    
+    }
+    else {
+      Serial.println("WiFi Error");
+    }
+    delay(1000);
 }
-  
+
+
+
+//      WiFiClient client;
+//      HTTPClient http;
+//      
+//      // Your Domain name with URL path or IP address with path
+//      http.begin(client, serverName);
+//
+//      // Specify content-type header
+//      http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+//      // Data to send with HTTP POST
+//      String httpRequestData = "command";           
+//      // Send HTTP POST request
+//      int httpResponseCode = http.POST(httpRequestData);
+//     String payloadGet = http.getString();
+//      Serial.print("HTTP Response code: ");
+//      Serial.println(httpResponseCode);
+//      Serial.print(payloadGet);
+//      
+//      // Free resources
+//      http.end();

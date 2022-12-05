@@ -3,8 +3,16 @@
 #ifndef _BV
 #define _BV(bit) (1 << (bit)) 
 #endif
+
 #include <LiquidCrystal_I2C.h>
 LiquidCrystal_I2C lcd(0x27, 16, 2); // I2C address 0x27, 16 column and 2 rows
+
+//For serial communication
+#include <SoftwareSerial.h>
+SoftwareSerial ArduinoSerial (10,11);// daclaring pins 10 and 11 as RX/TX pins of nano
+
+String dataIn;
+char c;
 
 Adafruit_MPR121 cap = Adafruit_MPR121();
 uint16_t lasttouched = 0;
@@ -14,10 +22,12 @@ int count = 0;
 int max_digit = 6;
 String otp_typed = "";
 void setup() {
-  Serial.begin(9600);
+  Serial.begin(115200);
+  ArduinoSerial.begin(9600);
   lcd.init();
   lcd.backlight();
   lcd.setCursor(0,0);
+
   lcd.print("Enter your OTP:");
   while (!Serial) { 
     delay(10);
@@ -59,25 +69,69 @@ void keypad_func(){
           lcd.print("Enter your OTP:");
           lcd.setCursor(0,1);
           lcd.print(otp_typed);
+          Serial.print("Error");
           }
 
           
         if(i == 3 && count==max_digit){
-         
-          count = 0;
-          otp_typed = "";
+          ArduinoSerial.print(otp_typed + " \n");
           lcd.clear();
           lcd.setCursor(0,0);
           lcd.print("OTP SENT");
           lcd.setCursor(0,1);
           lcd.print("Loading...");
+          count = 0;
+          otp_typed = "";
           delay(2000);
-
           lcd.clear();
           lcd.setCursor(0,0);
-          lcd.print("Enter your OTP:");
-          lcd.setCursor(0,1);
-          lcd.print(otp_typed);
+          lcd.print("Loading...");
+          delay(1000);
+          while(ArduinoSerial.available()>0){
+          c = ArduinoSerial.read();
+          if(c == '\n') {break;}    
+          else {dataIn+=c;}
+        }
+        if(c == '\n'){
+          dataIn.trim();
+          lcd.clear();
+          if(dataIn == "BORROWINGbasketball"){
+            lcd.setCursor(0,0);
+            lcd.print("Action");
+            lcd.setCursor(0,1);
+            lcd.print("Borrow B_Ball");
+            delay(10000);
+            lcd.clear();
+            lcd.setCursor(0,0);
+            lcd.print("Enter your OTP:");
+            lcd.setCursor(0,1);
+            lcd.print(otp_typed);
+            }
+          else if(dataIn == "BORROWINGvolleyball"){
+            lcd.setCursor(0,0);
+            lcd.print("Action");
+            lcd.setCursor(0,1);
+            lcd.print("Borrow V_Ball");
+            delay(10000);
+            lcd.clear();
+            lcd.setCursor(0,0);
+            lcd.print("Enter your OTP:");
+            lcd.setCursor(0,1);
+            lcd.print(otp_typed);
+            }
+           else{
+            lcd.setCursor(0,0);
+            lcd.print(dataIn);
+            delay(2000);
+            lcd.clear();
+            lcd.setCursor(0,0);
+            lcd.print("Enter your OTP:");
+            lcd.setCursor(0,1);
+            lcd.print(otp_typed);
+            }
+          dataIn = "";
+          c = 0;
+          }
         }
 
         
@@ -212,6 +266,7 @@ void keypad_func(){
           lcd.print("Enter your OTP:");
           lcd.setCursor(0,1);
           lcd.print(otp_typed);
+          Serial.println("press enter");
             
             }
         
@@ -225,9 +280,10 @@ void keypad_func(){
 void loop() {
   currtouched = cap.touched();
   for (uint8_t i=0; i<12; i++) {
-    if ((currtouched & _BV(i)) && !(lasttouched & _BV(i)) ) {
-      keypad_func();
-    }
-}
-delay(100);
+     if ((currtouched & _BV(i)) && !(lasttouched & _BV(i)) ) {
+       keypad_func();
+       }
+       }
+    delay(100);
+
 }
