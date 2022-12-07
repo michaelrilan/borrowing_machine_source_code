@@ -13,14 +13,19 @@ SoftwareSerial ArduinoSerial (10,11);// daclaring pins 10 and 11 as RX/TX pins o
 
 String dataIn;
 char c;
-
+int rec_ir_signal = 0;
 Adafruit_MPR121 cap = Adafruit_MPR121();
 uint16_t lasttouched = 0;
 uint16_t currtouched = 0;
 
+
+
 int count = 0;
 int max_digit = 6;
 String otp_typed = "";
+
+
+
 void setup() {
   Serial.begin(115200);
   ArduinoSerial.begin(9600);
@@ -29,12 +34,16 @@ void setup() {
   lcd.setCursor(0,0);
 
   lcd.print("Enter your OTP:");
-  while (!Serial) { 
+  while (!Serial) {
+    
     delay(10);
   }
+
+  
   // Default address is 0x5A, if tied to 3.3V its 0x5B
   // If tied to SDA its 0x5C and if SCL then 0x5D
   if (!cap.begin(0x5A)) {
+    
     //Serial.println("KEYPAD ERROR");
     while (1);
   }
@@ -45,7 +54,6 @@ void keypad_func(){
   currtouched = cap.touched();
   for (uint8_t i=0; i<12; i++) {
     if ((currtouched & _BV(i)) && !(lasttouched & _BV(i)) ) {
-      
         if(i == 11){
           count = 0;
           otp_typed = "";
@@ -54,7 +62,6 @@ void keypad_func(){
           lcd.print("Enter your OTP:");
           lcd.setCursor(0,1);
           lcd.print(otp_typed);
-          
           }
         if(i == 3 && count!=max_digit){
           lcd.clear();
@@ -87,6 +94,7 @@ void keypad_func(){
           lcd.setCursor(0,0);
           lcd.print("Loading...");
           delay(1000);
+          
           while(ArduinoSerial.available()>0){
           c = ArduinoSerial.read();
           if(c == '\n') {break;}    
@@ -119,7 +127,31 @@ void keypad_func(){
             lcd.setCursor(0,1);
             lcd.print(otp_typed);
             }
-           else{
+           else if(dataIn == "RETURNINGbasketball"){
+            lcd.setCursor(0,0);
+            lcd.print("Action");
+            lcd.setCursor(0,1);
+            lcd.print("Return B_Ball");
+            delay(10000);
+            lcd.clear();
+            lcd.setCursor(0,0);
+            lcd.print("Enter your OTP:");
+            lcd.setCursor(0,1);
+            lcd.print(otp_typed);
+            }
+            else if(dataIn == "RETURNINGvolleyball"){
+            lcd.setCursor(0,0);
+            lcd.print("Action");
+            lcd.setCursor(0,1);
+            lcd.print("Return V_Ball");
+            delay(10000);
+            lcd.clear();
+            lcd.setCursor(0,0);
+            lcd.print("Enter your OTP:");
+            lcd.setCursor(0,1);
+            lcd.print(otp_typed);
+            }
+            else{
             lcd.setCursor(0,0);
             lcd.print(dataIn);
             delay(2000);
@@ -284,6 +316,7 @@ void loop() {
        keypad_func();
        }
        }
+     
     delay(100);
 
 }
