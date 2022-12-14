@@ -1,23 +1,19 @@
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
-LiquidCrystal_I2C lcd(0x27,16,4); 
+LiquidCrystal_I2C lcd(0x27,16,2); 
 #include <Servo.h>
-Servo myservo;
-const int coin = 2;
-const int buttonPin = 10; 
-boolean insert = false;
-int pulse = 0;
-int clk = 0;
-int impulscnt =0;
-int credits = 0;
+#define coinSlot 6
+int pulse;
+int coinSlotStatus;
 int buttonState = 0;
-int pos = 0; 
+int pos = 0;
+Servo myservo;
+const int buttonPin = 10; 
 int price;
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
-  attachInterrupt(digitalPinToInterrupt(2), coinInterrupt, FALLING);
-  delay(100);
+  pinMode(coinSlot, INPUT_PULLUP);
   lcd.init();                      // initialize the lcd 
   // Print a message to the LCD.
   lcd.backlight();
@@ -28,20 +24,14 @@ void setup() {
   pinMode(buttonPin, INPUT);
   myservo.attach(11);
   price = 10;
+  myservo.write(0);
 }
 
-//interrupt
-void coinInterrupt() {
-  pulse++ ;
-  impulscnt = impulscnt+1;
-  insert = true;
-  clk = 0;
-}
 
 
 // for the  credits of the user how much the user inserted in the coin acceptor
 void creditsmeth(){
-    String str_credits = String(credits);
+    String str_credits = String(pulse);
     lcd.clear();
     lcd.setCursor(0,0);
     lcd.print("Price: 10 Pesos");
@@ -58,48 +48,10 @@ void display_errorrr(){
 
 
 void loop() {
-  
-  // put your main code here, to run repeatedly:
-  clk = clk+1;
-  Serial.print("clock = ");
-  Serial.print(clk);
-  Serial.print("Impulse:"); 
-  Serial.println(impulscnt); 
-
-  myservo.write(0);
-  
-  if (clk >= 30 and insert == true and impulscnt == 1) {
-    insert = false;
-    Serial.println("coin detected 1 peso");
-    impulscnt = 0;
-    credits = credits + 1;
-    creditsmeth();
-
-    delay(1000);
-  }
-  if (clk >= 30 and insert == true and impulscnt == 5) {
-    insert = false;
-    Serial.println("coin detected 5 pesos");
-    impulscnt = 0;
-    credits = credits + 5;
-    creditsmeth();
-    delay(1000);
-  }
-  if (clk >= 30 and insert == true and impulscnt == 10) {
-    insert = false;
-    Serial.println("coin detected 10 pesos");
-    credits = credits + 10;
-    impulscnt = 0;
-    creditsmeth();
-    
-    delay(1000);
-    
-  }
-
   buttonState = digitalRead(buttonPin);
-  if (buttonState == HIGH) {
-    if(credits >= price){
-     credits = credits-price;
+    if (buttonState == HIGH) {
+    if(pulse >= price){
+     pulse = pulse-price;
      creditsmeth();
      delay(100);
      for (pos = 0; pos <= 180; pos += 1) { // goes from 0 degrees to 180 degrees
@@ -120,5 +72,11 @@ void loop() {
       }
     
   }
-    
+  coinSlotStatus = digitalRead(coinSlot);
+  delay(35);
+  if(coinSlotStatus == 0){
+      pulse+=1; 
+      creditsmeth();
+      delay(35);
+    }     
   } 
