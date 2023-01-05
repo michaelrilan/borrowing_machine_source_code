@@ -96,7 +96,7 @@ void keypad_func(){
           lcd.print("VIEW THE PROCESS");
           lcd.setCursor(0,1);
           lcd.print("ON YOUR DEVICE");
-          delay(20000);
+          delay(15000);
 
           lcd.clear();
           lcd.setCursor(0,0);

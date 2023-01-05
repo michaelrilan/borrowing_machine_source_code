@@ -1,5 +1,4 @@
 #include <ESP8266WiFi.h> 
-
 #include <ESP8266HTTPClient.h> 
 #include <WiFiClient.h>
 #include <SoftwareSerial.h>
@@ -121,7 +120,7 @@ void loop() {
               delay(15000);
               servo_vball.write(0);
               res_otp();
-              RGB_color(0,0);
+              RGB_color(0,255);
             }
           else if(payloadGet == "RETURN_B_BALL"){
               RGB_color(0,0);
@@ -129,7 +128,7 @@ void loop() {
               delay(15000);
               servo_bball.write(0);
               res_otp();
-              RGB_color(0,0);
+              RGB_color(0,255);
             }
           else if(payloadGet == "BORROW_B_BALL"){
                 RGB_color(0,0);
@@ -151,10 +150,10 @@ void loop() {
                 RGB_color(0,0);
                 digitalWrite(vball_expand,HIGH);
                 digitalWrite(vball_retract,LOW);
-                delay(11000);
+                delay(14500);
                 digitalWrite(vball_expand,LOW);
                 digitalWrite(vball_retract,HIGH);
-                delay(11000);
+                delay(14500);
                 digitalWrite(bball_expand,HIGH);
                 digitalWrite(bball_retract,HIGH);
                 digitalWrite(vball_expand,HIGH);
@@ -163,6 +162,11 @@ void loop() {
                 
             }
           else if(payloadGet == "otp_error"){
+            RGB_color(255,0);
+            delay(5000);
+            RGB_color(0,255);
+            }
+          else{
             RGB_color(255,0);
             delay(5000);
             RGB_color(0,255);
