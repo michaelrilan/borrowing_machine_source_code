@@ -5,10 +5,10 @@
 #include <Servo.h>
 
 SoftwareSerial WemosSerial (D1,D2);// declaring wemos RX/TX pins;
-const char* ssid     = "RILAN_ZTE_2.4G";
-const char* password = "Escanor_7th";
+const char* ssid     = "Mico";
+const char* password = "12345678";
 
-const char* serverName = "http://192.168.1.5/PE_System/physical_education_web_app/machine_API.php";
+const char* serverName = "http://www.physicaleducationsystem.online/machine_API.php";
 //
 
 Servo servo_vball;
